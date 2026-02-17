@@ -1,0 +1,59 @@
+name: Promote Frontend QA to NEW
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Backend Release Version (example: v2026.02.17.12)"
+        required: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout QA branch
+      - name: Checkout QA
+        uses: actions/checkout@v4
+        with:
+          ref: qa
+          fetch-depth: 0
+
+      # 2. Store Release Version
+      - name: Set Release Version
+        run: |
+          VERSION=${{ github.event.inputs.release_version }}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # 3. Update VERSION file
+      - name: Update VERSION File
+        run: |
+          echo "$VERSION" > VERSION
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add VERSION
+          git commit -m "Release $VERSION"
+          git push origin qa
+
+      # 4. Create Matching Tag (same as backend)
+      - name: Create Tag
+        run: |
+          git tag $VERSION
+          git push origin $VERSION
+
+      # 5. Update NEW branch (chat-new)
+      - name: Update NEW Branch
+        run: |
+          git checkout chat-new
+          git merge qa --no-ff -m "Promote QA to NEW - $VERSION"
+          git push origin chat-new
+
+      # 6. Deploy Frontend NEW
+      - name: Deploy Frontend NEW
+        run: |
+          echo "Deploying frontend NEW using version $VERSION"
+          # Replace with your real deployment command
+
+      # 7. Promotion Complete
+      - name: Done
+        run: echo "Frontend successfully promoted with version $VERSION"
