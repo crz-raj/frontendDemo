@@ -1,0 +1,34 @@
+name: Rollback Frontend NEW
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to rollback to (example: v2026.02.17.1)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout NEW branch
+        uses: actions/checkout@v4
+        with:
+          ref: chat-new
+          fetch-depth: 0
+
+      - name: Rollback to Release Tag
+        run: |
+          TAG=${{ github.event.inputs.release_tag }}
+          echo "Rolling back frontend NEW (chat-new) to $TAG"
+          git reset --hard $TAG
+          git push origin chat-new --force
+
+      - name: Deployment after rollback
+        run: |
+          echo "Deploying frontend NEW after rollback to $TAG"
+          # Add your actual deployment commands here
